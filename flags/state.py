@@ -1,4 +1,4 @@
-from flags.settings import get_flags
+from flags.sources import get_flags
 
 
 def flag_state(flag_name, **kwargs):
