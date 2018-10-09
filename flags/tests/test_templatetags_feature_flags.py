@@ -1,6 +1,13 @@
 from django.http import HttpRequest
 from django.template import Context, Template
-from django.test import TestCase
+from django.test import TestCase, override_settings
+
+from flags.conditions import register
+
+
+@register('condition_that_takes_kwarg')
+def condition_that_takes_kwarg(expected_value, passed_value=None, **kwargs):
+    return expected_value == passed_value
 
 
 class FlagsTemplateTagsTestCase(TestCase):
@@ -113,3 +120,25 @@ class FlagsTemplateTagsTestCase(TestCase):
             '{% endif %}'
         )
         self.assertEqual(rendered, 'flag enabled')
+
+    @override_settings(FLAGS={
+        'TEST_KWARG': {'condition_that_takes_kwarg': 1234},
+    })
+    def test_passing_kwarg_to_tag_enabled(self):
+        rendered = self.render_template(
+            '{% load feature_flags %}'
+            '{% flag_enabled "TEST_KWARG" passed_value=1234 as test_flag %}'
+            '{{ test_flag|yesno:"enabled,disabled" }}'
+        )
+        self.assertEqual(rendered, 'enabled')
+
+    @override_settings(FLAGS={
+        'TEST_KWARG': {'condition_that_takes_kwarg': 1234},
+    })
+    def test_passing_kwarg_to_tag_disabled(self):
+        rendered = self.render_template(
+            '{% load feature_flags %}'
+            '{% flag_disabled "TEST_KWARG" passed_value=5678 as test_flag %}'
+            '{{ test_flag|yesno:"disabled,enabled" }}'
+        )
+        self.assertEqual(rendered, 'disabled')
