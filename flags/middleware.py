@@ -8,6 +8,9 @@ class FlagConditionsMiddleware(object):
     Simple middleware that adds all available feature flag conditions to the
     request so that flag state can be checked.
     """
+    request_attribute = 'flag_conditions'
 
     def process_request(self, request):
-        request.FLAG_CONDITIONS = get_flags()
+        flags = get_flags()
+
+        setattr(request, self.request_attribute, flags)
